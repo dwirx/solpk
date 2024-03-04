@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function fetchData() {
-    fetch('/data')
+    fetch('so.csv')
       .then(response => response.json())
       .then(fetchedData => {
         data = fetchedData;
