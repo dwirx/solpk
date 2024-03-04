@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   let data = [];
 
-  // Check if data is available in local storage
   const savedData = localStorage.getItem('tableData');
   if (savedData) {
     data = JSON.parse(savedData);
@@ -13,13 +12,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function fetchData() {
     fetch('so.csv')
-      .then(response => response.json())
-      .then(fetchedData => {
-        data = fetchedData;
-        localStorage.setItem('tableData', JSON.stringify(data)); // Save data to local storage
+      .then(response => response.text())
+      .then(csvData => {
+        data = parseCSV(csvData);
+        localStorage.setItem('tableData', JSON.stringify(data));
         renderTable(data);
         setupSearch(data);
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
       });
+  }
+
+  function parseCSV(csvData) {
+    const lines = csvData.split('\n');
+    const headers = lines[0].split(',').map(header => header.trim());
+    const parsedData = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(value => value.trim());
+      const row = {};
+      for (let j = 0; j < headers.length; j++) {
+        row[headers[j]] = values[j];
+      }
+      parsedData.push(row);
+    }
+    return parsedData;
   }
 
   function renderTable(data) {
@@ -27,13 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
     tableBody.innerHTML = '';
     data.forEach(row => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${row['NO.']}</td>
-        <td>${row['NAMA_SO']}</td>
-        <td>${row['PROVINSI']}</td>
-        <td>${row['ALAMAT']}</td>
-        <td>${row['MASA_IZIN']}</td>
-      `;
+      Object.values(row).forEach(value => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        tr.appendChild(td);
+      });
       tableBody.appendChild(tr);
     });
   }
@@ -41,14 +56,9 @@ document.addEventListener('DOMContentLoaded', function() {
   function setupSearch(data) {
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', handleSearch);
-    searchInput.addEventListener('keypress', function(event) {
-      if (event.key === 'Enter') {
-        handleSearch();
-      }
-    });
 
     function handleSearch() {
-      const searchTerm = searchInput.value.toLowerCase();
+      const searchTerm = searchInput.value.trim().toLowerCase();
       const filteredData = data.filter(row => {
         return Object.values(row).some(value => {
           return value.toLowerCase().includes(searchTerm);
