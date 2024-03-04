@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const searchTerm = searchInput.value.trim().toLowerCase();
       const filteredData = data.filter(row => {
         return Object.values(row).some(value => {
-          return value.toLowerCase().includes(searchTerm);
+          const regex = new RegExp(searchTerm, 'i');
+          return regex.test(value);
         });
       });
       renderTable(filteredData);
